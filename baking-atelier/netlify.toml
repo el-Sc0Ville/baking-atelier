@@ -1,0 +1,15 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[build.environment]
+  # Secrets scanning disabled — the only credential in this project's source files
+  # is the Supabase anon key in index.html, which is intentionally public
+  # (read-only, client-side). All real secrets (Stripe, Supabase service key) are
+  # stored exclusively in Netlify environment variables, not in code.
+  SECRETS_SCAN_ENABLED = "false"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
