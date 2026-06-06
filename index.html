@@ -933,7 +933,9 @@
     <div class="menu-notice">
       <span class="menu-notice-icon">🗓️</span>
       <div>
-        <strong>Pick-up window:</strong> <em id="pickup-location">Location shared by email after order</em>
+        <strong>Pick-up window:</strong> <span id="pickup-hours">Saturday & Sunday · 10am – 2pm</span>
+        &nbsp;·&nbsp;
+        📍 <span id="pickup-address">Location shared by email after order</span>
       </div>
     </div>
 
@@ -1170,7 +1172,8 @@ const CONFIG = {
   SUPABASE_URL:      'https://uzptqbvvgwtcluahrfuw.supabase.co',        // e.g. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6cHRxYnZ2Z3d0Y2x1YWhyZnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTE0OTQsImV4cCI6MjA5NjMyNzQ5NH0.49Wm-BNuGzcsJkont03jGt6OfYZlk9fg20oPDiN91Z8',   // starts with eyJ…
   CHECKOUT_FUNCTION_URL: '/.netlify/functions/create-checkout',
-  PICKUP_LOCATION: '86 St. George St. W, Alexandria K0C1A0 — Saturday & Sunday 10am–2pm',
+  PICKUP_ADDRESS: '86 St. George St. W, Alexandria K0C1A0',
+  PICKUP_HOURS:   'Saturday & Sunday · 10am – 2pm',
 };
 
 /* ----------------------------------------------------------------
@@ -1223,8 +1226,9 @@ let qty = 1;
    INIT
    ---------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-  // Show pickup location
-  document.getElementById('pickup-location').textContent = CONFIG.PICKUP_LOCATION;
+  // Show pickup info
+  document.getElementById('pickup-hours').textContent   = CONFIG.PICKUP_HOURS;
+  document.getElementById('pickup-address').textContent = CONFIG.PICKUP_ADDRESS;
 
   // Show success banner if redirected from Stripe
   const params = new URLSearchParams(window.location.search);
