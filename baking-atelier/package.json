@@ -1,9 +1,0 @@
-{
-  "name": "baking-atelier",
-  "version": "1.0.0",
-  "description": "Baking Atelier — online storefront",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.45.0",
-    "stripe": "^14.0.0"
-  }
-}
