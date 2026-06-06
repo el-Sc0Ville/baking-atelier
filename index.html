@@ -935,7 +935,7 @@
       <div>
         <strong>Pick-up window:</strong> <span id="pickup-hours">Saturday & Sunday · 10am – 2pm</span>
         &nbsp;·&nbsp;
-        📍 <span id="pickup-address">Location shared by email after order</span>
+        📍 <a id="pickup-address" href="#" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">Location shared by email after order</a>
       </div>
     </div>
 
@@ -1228,7 +1228,9 @@ let qty = 1;
 document.addEventListener('DOMContentLoaded', () => {
   // Show pickup info
   document.getElementById('pickup-hours').textContent   = CONFIG.PICKUP_HOURS;
-  document.getElementById('pickup-address').textContent = CONFIG.PICKUP_ADDRESS;
+  const addrEl = document.getElementById('pickup-address');
+  addrEl.textContent = CONFIG.PICKUP_ADDRESS;
+  addrEl.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(CONFIG.PICKUP_ADDRESS);
 
   // Show success banner if redirected from Stripe
   const params = new URLSearchParams(window.location.search);
