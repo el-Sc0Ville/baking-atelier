@@ -1147,9 +1147,9 @@
 
     <div class="modal-footer">
       <button class="btn btn-primary btn-checkout" id="checkoutBtn" onclick="proceedToCheckout()">
-        Continue to payment →
+        Place order →
       </button>
-      <p class="modal-note">🔒 Secure checkout via Stripe · No account required</p>
+      <p class="modal-note">💳 Payment by Interac e-transfer or cash at pick-up · No account required</p>
     </div>
   </div>
 </div>
@@ -1165,13 +1165,13 @@
    project dashboard → Settings → API
    (The anon key is safe to expose in the frontend)
 
-   CHECKOUT_FUNCTION_URL: your Netlify function endpoint.
+   ORDER_FUNCTION_URL: the Netlify function that saves orders.
    Leave as-is if deploying to Netlify.
    ---------------------------------------------------------------- */
 const CONFIG = {
   SUPABASE_URL:      'https://uzptqbvvgwtcluahrfuw.supabase.co',        // e.g. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6cHRxYnZ2Z3d0Y2x1YWhyZnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTE0OTQsImV4cCI6MjA5NjMyNzQ5NH0.49Wm-BNuGzcsJkont03jGt6OfYZlk9fg20oPDiN91Z8',   // starts with eyJ…
-  CHECKOUT_FUNCTION_URL: '/.netlify/functions/create-checkout',
+  ORDER_FUNCTION_URL: '/.netlify/functions/submit-order',
   PICKUP_ADDRESS: '86 St. George St. W, Alexandria K0C1A0',
   PICKUP_HOURS:   'Saturday & Sunday · 10am – 2pm',
 };
@@ -1232,13 +1232,7 @@ document.addEventListener('DOMContentLoaded', () => {
   addrEl.textContent = CONFIG.PICKUP_ADDRESS;
   addrEl.href = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(CONFIG.PICKUP_ADDRESS);
 
-  // Show success banner if redirected from Stripe
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('success') === '1') {
-    document.getElementById('successBanner').classList.add('show');
-    window.history.replaceState({}, '', window.location.pathname);
-    document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
-  }
+  // (Success banner is shown programmatically after order submission)
 
   // Render FAQ
   renderFAQ();
@@ -1432,7 +1426,7 @@ function changeQty(delta) {
 }
 
 /* ----------------------------------------------------------------
-   STRIPE CHECKOUT
+   ORDER SUBMISSION (Interac / cash — no payment required upfront)
    ---------------------------------------------------------------- */
 async function proceedToCheckout() {
   const name  = document.getElementById('customerName').value.trim();
@@ -1450,29 +1444,44 @@ async function proceedToCheckout() {
   const btn = document.getElementById('checkoutBtn');
   btn.disabled = true;
   document.getElementById('checkoutLoading').style.display = 'block';
+  document.getElementById('checkoutLoading').textContent   = '⏳ Placing your order…';
   document.getElementById('checkoutError').style.display   = 'none';
 
   try {
-    const res = await fetch(CONFIG.CHECKOUT_FUNCTION_URL, {
+    const res = await fetch(CONFIG.ORDER_FUNCTION_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        productId: selectedProduct.id,
-        quantity:  qty,
+        productId:     selectedProduct.id,
+        quantity:      qty,
         customerName:  name,
         customerEmail: email,
-        notes: document.getElementById('orderNotes').value.trim(),
+        notes:         document.getElementById('orderNotes').value.trim(),
       }),
     });
 
     const data = await res.json();
 
-    if (!res.ok || !data.checkoutUrl) {
+    if (!res.ok || !data.success) {
       throw new Error(data.error || 'Something went wrong. Please try again.');
     }
 
-    // Redirect to Stripe Checkout
-    window.location.href = data.checkoutUrl;
+    // Success — close modal and show banner
+    closeModalDirect();
+    const banner = document.getElementById('successBanner');
+    banner.textContent = `🎉 Order #${data.orderRef} confirmed! Check your email for details. Payment by e-transfer or cash at pick-up.`;
+    banner.classList.add('show');
+    banner.scrollIntoView({ behavior: 'smooth' });
+
+    // Refresh product inventory display
+    if (supabaseClient) {
+      loadProducts();
+    } else {
+      // Update demo product locally
+      const p = products.find(p => p.id === selectedProduct.id);
+      if (p) { p.remaining_slots = Math.max(0, p.remaining_slots - qty); }
+      renderProducts(products);
+    }
 
   } catch (err) {
     showError(err.message);
