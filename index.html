@@ -1205,13 +1205,13 @@
    project dashboard → Settings → API
    (The anon key is safe to expose in the frontend)
 
-   ORDER_FUNCTION_URL: the Netlify function that saves orders.
+   ORDER_FUNCTION_URL: the serverless function that saves orders.
    Leave as-is if deploying to Netlify.
    ---------------------------------------------------------------- */
 const CONFIG = {
   SUPABASE_URL:      'https://uzptqbvvgwtcluahrfuw.supabase.co',        // e.g. https://xxxx.supabase.co
   SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6cHRxYnZ2Z3d0Y2x1YWhyZnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTE0OTQsImV4cCI6MjA5NjMyNzQ5NH0.49Wm-BNuGzcsJkont03jGt6OfYZlk9fg20oPDiN91Z8',   // starts with eyJ…
-  ORDER_FUNCTION_URL: '/.netlify/functions/submit-order',
+  ORDER_FUNCTION_URL: '/api/submit-order',
   PICKUP_ADDRESS: '86 St. George St. W, Alexandria K0C1A0',
   PICKUP_HOURS:   'Saturday & Sunday · 10am – 2pm',
   BAKER_EMAIL:    'ola_baksz@hotmail.com',   // CHANGE to real Interac e-transfer email
