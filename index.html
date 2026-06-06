@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Baking Atelier — handcrafted scones, cupcakes & cakes. Order online for pickup.">
+  <title>Baking Atelier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Supabase JS client (reads live inventory) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <style>
+    /* ============================================================
+       DESIGN SYSTEM — warm artisanal palette
+    ============================================================ */
+    :root {
+      --cream:        #faf6f0;
+      --cream2:       #f3ede3;
+      --warm-white:   #fffdf9;
+      --brown:        #7c5c3e;
+      --brown-dark:   #4a3525;
+      --rose:         #b97a72;
+      --rose-light:   #f5e4e1;
+      --text:         #2c1f14;
+      --text-muted:   #8a7060;
+      --border:       #e8ddd4;
+      --green:        #4a7c59;
+      --green-bg:     #e8f2ec;
+      --amber:        #c8881a;
+      --amber-bg:     #fdf3e0;
+      --red:          #c0392b;
+      --red-bg:       #fdecea;
+      --shadow-sm:    0 1px 8px rgba(44,31,20,0.07);
+      --shadow:       0 4px 24px rgba(44,31,20,0.10);
+      --shadow-lg:    0 12px 48px rgba(44,31,20,0.14);
+      --radius:       14px;
+      --radius-sm:    8px;
+    }
+
+    /* ============================================================
+       RESET & BASE
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    img { display: block; max-width: 100%; }
+
+    a { color: var(--brown); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    h1, h2, h3, h4 { font-family: 'Playfair Display', serif; line-height: 1.2; }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section { padding: 80px 0; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--brown);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--brown-dark); transform: translateY(-1px); box-shadow: var(--shadow); text-decoration: none; color: #fff; }
+    .btn-outline {
+      background: transparent;
+      color: var(--brown);
+      border: 2px solid var(--brown);
+    }
+    .btn-outline:hover { background: var(--cream2); text-decoration: none; }
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* ============================================================
+       HEADER / NAV
+    ============================================================ */
+    header {
+      background: var(--warm-white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo-icon {
+      font-size: 26px;
+    }
+    .nav-logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--brown-dark);
+    }
+    .nav-logo-sub {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      display: block;
+      margin-top: -2px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--brown); text-decoration: none; }
+
+    .nav-mobile-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--text);
+    }
+
+    /* ============================================================
+       HERO
+    ============================================================ */
+    .hero {
+      background: linear-gradient(135deg, var(--cream2) 0%, var(--warm-white) 60%);
+      padding: 100px 0 80px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c4847a' fill-opacity='0.04'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: var(--rose-light);
+      color: var(--rose);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 50px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 6vw, 72px);
+      color: var(--brown-dark);
+      margin-bottom: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero h1 em {
+      color: var(--rose);
+      font-style: italic;
+    }
+
+    .hero-desc {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 40px;
+      font-weight: 400;
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      margin-top: 60px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stat {
+      text-align: center;
+    }
+    .hero-stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--brown);
+    }
+    .hero-stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* ============================================================
+       MENU / PRODUCTS
+    ============================================================ */
+    .menu-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .menu-header h2 {
+      font-size: 40px;
+      color: var(--brown-dark);
+      margin-bottom: 12px;
+    }
+    .menu-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .menu-notice {
+      background: var(--amber-bg);
+      border: 1px solid #f0c060;
+      border-radius: var(--radius-sm);
+      padding: 14px 20px;
+      margin-bottom: 40px;
+      font-size: 14px;
+      color: #7a5010;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .menu-notice-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 28px;
+    }
+
+    .product-card {
+      background: var(--warm-white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .product-card:hover {
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+    }
+
+    .product-img-wrap {
+      height: 210px;
+      overflow: hidden;
+      position: relative;
+      background: var(--cream2);
+    }
+    .product-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .product-card:hover .product-img-wrap img { transform: scale(1.04); }
+
+    .product-tag {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: var(--brown);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 50px;
+    }
+
+    .product-body {
+      padding: 22px;
+    }
+
+    .product-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .product-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--brown-dark);
+      flex: 1;
+      padding-right: 12px;
+    }
+
+    .product-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--brown);
+      white-space: nowrap;
+    }
+
+    .product-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 18px;
+    }
+
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .slots-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 50px;
+      flex-shrink: 0;
+    }
+    .slots-badge.available {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+    .slots-badge.low {
+      background: var(--amber-bg);
+      color: var(--amber);
+    }
+    .slots-badge.sold-out {
+      background: var(--red-bg);
+      color: var(--red);
+    }
+    .slots-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+    .slots-loading { opacity: 0.4; }
+
+    .order-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px 18px;
+      font-size: 14px;
+    }
+
+    /* ============================================================
+       HOW IT WORKS
+    ============================================================ */
+    .how-it-works {
+      background: var(--cream2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .how-it-works h2 {
+      text-align: center;
+      font-size: 36px;
+      color: var(--brown-dark);
+      margin-bottom: 52px;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 36px;
+      text-align: center;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--rose-light);
+      color: var(--rose);
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 auto 16px;
+    }
+    .step h3 {
+      font-size: 17px;
+      color: var(--brown-dark);
+      margin-bottom: 8px;
+    }
+    .step p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ============================================================
+       INSTAGRAM
+    ============================================================ */
+    .instagram-section { background: var(--warm-white); }
+    .ig-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 36px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .ig-title-group h2 {
+      font-size: 36px;
+      color: var(--brown-dark);
+    }
+    .ig-title-group p {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin-top: 4px;
+    }
+    .ig-handle-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--brown);
+      border: 2px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+    .ig-handle-link:hover { background: var(--rose-light); border-color: var(--rose-light); text-decoration: none; }
+    .ig-handle-link svg { width: 18px; height: 18px; }
+
+    /* Instagram embed grid */
+    .ig-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    /* Placeholder tiles shown while embed loads or if no embed is set */
+    .ig-placeholder {
+      aspect-ratio: 1;
+      background: var(--cream2);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+    .ig-placeholder-icon { font-size: 32px; opacity: 0.5; }
+
+    /* Actual Instagram embed (blockquote) wrapper */
+    .ig-embed-wrap {
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: var(--radius-sm);
+      background: var(--cream2);
+    }
+    .ig-embed-wrap .instagram-media {
+      margin: 0 !important;
+      min-width: unset !important;
+      width: 100% !important;
+    }
+
+    /* ============================================================
+       FAQ
+    ============================================================ */
+    .faq-section { background: var(--cream2); }
+    .faq-header {
+      text-align: center;
+      margin-bottom: 52px;
+    }
+    .faq-header h2 {
+      font-size: 36px;
+      color: var(--brown-dark);
+      margin-bottom: 10px;
+    }
+    .faq-header p {
+      color: var(--text-muted);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+      gap: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--warm-white);
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    .faq-item:last-child { border-bottom: none; }
+
+    .faq-question {
+      width: 100%;
+      text-align: left;
+      padding: 22px 28px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-family: 'Playfair Display', serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--brown-dark);
+      transition: background 0.15s;
+    }
+    .faq-question:hover { background: var(--cream); }
+    .faq-question.open { color: var(--rose); }
+
+    .faq-chevron {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--cream2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: transform 0.25s, background 0.15s;
+    }
+    .faq-question.open .faq-chevron { transform: rotate(180deg); background: var(--rose-light); color: var(--rose); }
+
+    .faq-answer {
+      display: none;
+      padding: 0 28px 22px;
+      font-size: 15px;
+      color: var(--text-muted);
+      line-height: 1.75;
+    }
+    .faq-answer.open { display: block; }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      background: var(--brown-dark);
+      color: rgba(255,255,255,0.75);
+      padding: 52px 0 36px;
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .footer-brand .nav-logo-text { color: #fff; font-size: 22px; }
+    .footer-brand p {
+      margin-top: 8px;
+      font-size: 14px;
+      max-width: 280px;
+      line-height: 1.6;
+    }
+    .footer-links h4 {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      margin-bottom: 14px;
+      font-size: 16px;
+    }
+    .footer-links ul { list-style: none; }
+    .footer-links li { margin-bottom: 8px; }
+    .footer-links a { font-size: 14px; color: rgba(255,255,255,0.65); transition: color 0.2s; }
+    .footer-links a:hover { color: #fff; text-decoration: none; }
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 36px auto 0;
+      padding: 20px 24px 0;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================================
+       ORDER MODAL
+    ============================================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(44,31,20,0.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--warm-white);
+      border-radius: var(--radius);
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalIn 0.25s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 28px 28px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-img {
+      width: 80px;
+      height: 80px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--cream2);
+    }
+    .modal-title-group { flex: 1; }
+    .modal-product-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--brown-dark);
+    }
+    .modal-price { font-size: 16px; color: var(--brown); font-weight: 600; margin-top: 2px; }
+    .modal-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: var(--text-muted);
+      line-height: 1;
+      padding: 4px;
+    }
+
+    .modal-body { padding: 24px 28px; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+    .form-input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--warm-white);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--brown); }
+
+    .qty-control {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      width: fit-content;
+    }
+    .qty-btn {
+      background: var(--cream2);
+      border: none;
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--brown-dark);
+      transition: background 0.15s;
+    }
+    .qty-btn:hover { background: var(--border); }
+    .qty-display {
+      width: 52px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      border: none;
+      border-left: 1.5px solid var(--border);
+      border-right: 1.5px solid var(--border);
+      padding: 8px 4px;
+      background: var(--warm-white);
+    }
+
+    .modal-total {
+      background: var(--cream2);
+      border-radius: var(--radius-sm);
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--brown-dark);
+    }
+
+    .modal-footer {
+      padding: 0 28px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-checkout {
+      width: 100%;
+      justify-content: center;
+      padding: 14px 24px;
+      font-size: 16px;
+    }
+    .modal-note {
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .checkout-loading {
+      display: none;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 8px;
+    }
+    .checkout-error {
+      display: none;
+      background: var(--red-bg);
+      color: var(--red);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+
+    /* ============================================================
+       SUCCESS BANNER (shown after successful Stripe payment)
+    ============================================================ */
+    .success-banner {
+      display: none;
+      background: var(--green-bg);
+      border-bottom: 1px solid #b2d8bf;
+      padding: 18px 24px;
+      text-align: center;
+      color: var(--green);
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .success-banner.show { display: block; }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 700px) {
+      section { padding: 56px 0; }
+      .hero { padding: 70px 0 60px; }
+      .hero h1 { font-size: 36px; }
+      .hero-stats { gap: 24px; margin-top: 40px; }
+      .nav-links { display: none; }
+      .nav-mobile-toggle { display: block; }
+      .ig-grid { grid-template-columns: repeat(2, 1fr); }
+      .faq-grid { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 28px; }
+      .modal { margin: 0; border-radius: var(--radius) var(--radius) 0 0; align-self: flex-end; max-width: 100%; }
+      .modal-overlay { align-items: flex-end; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ================================================================
+     SUCCESS BANNER (shown after Stripe redirects back with ?success=1)
+================================================================ -->
+<div class="success-banner" id="successBanner">
+  🎉 Your order is confirmed! Check your email for details. Can't wait to bake for you!
+</div>
+
+<!-- ================================================================
+     HEADER
+================================================================ -->
+<header>
+  <nav>
+    <a href="#" class="nav-logo" style="text-decoration:none;">
+      <span class="nav-logo-icon">🥐</span>
+      <span>
+        <span class="nav-logo-text">Baking Atelier</span>
+        <span class="nav-logo-sub">Handcrafted with love</span>
+      </span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#instagram">Instagram</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#menu" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Order Now</a></li>
+    </ul>
+    <button class="nav-mobile-toggle" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
+  </nav>
+</header>
+
+<!-- ================================================================
+     HERO
+================================================================ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-badge">✨ Made to order · Small batches · Pick up only</div>
+    <h1>Baked with passion,<br><em>crafted for you</em></h1>
+    <p class="hero-desc">
+      Every scone, cupcake, and cake is made from scratch using quality ingredients.
+      I bake in small batches so nothing sits around — order ahead and pick up fresh.
+    </p>
+    <div class="hero-actions">
+      <a href="#menu" class="btn btn-primary">Browse this week's menu</a>
+      <a href="#faq" class="btn btn-outline">How it works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">100%</div>
+        <div class="hero-stat-label">Made from scratch</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">Small</div>
+        <div class="hero-stat-label">Batches only</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">Fresh</div>
+        <div class="hero-stat-label">Pick-up same day</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     MENU / PRODUCTS
+================================================================ -->
+<section id="menu">
+  <div class="container">
+    <div class="menu-header">
+      <h2>This Week's Menu</h2>
+      <p>Limited quantities — order early to avoid missing out. Inventory updates in real time.</p>
+    </div>
+
+    <div class="menu-notice">
+      <span class="menu-notice-icon">🗓️</span>
+      <div>
+        <strong>Pick-up window:</strong> Saturday & Sunday · 10 am – 2 pm ·
+        <em id="pickup-location">Location shared by email after order</em>
+      </div>
+    </div>
+
+    <!-- Product cards are injected here by JS -->
+    <div class="product-grid" id="productGrid">
+      <!-- Loading skeletons -->
+      <div class="product-card" style="opacity:0.4;pointer-events:none;">
+        <div class="product-img-wrap" style="background:var(--cream2);"></div>
+        <div class="product-body">
+          <div style="height:20px;background:var(--border);border-radius:4px;margin-bottom:10px;"></div>
+          <div style="height:14px;background:var(--border);border-radius:4px;margin-bottom:6px;width:70%;"></div>
+          <div style="height:14px;background:var(--border);border-radius:4px;width:50%;"></div>
+        </div>
+      </div>
+      <div class="product-card" style="opacity:0.4;pointer-events:none;">
+        <div class="product-img-wrap" style="background:var(--cream2);"></div>
+        <div class="product-body">
+          <div style="height:20px;background:var(--border);border-radius:4px;margin-bottom:10px;"></div>
+          <div style="height:14px;background:var(--border);border-radius:4px;margin-bottom:6px;width:70%;"></div>
+          <div style="height:14px;background:var(--border);border-radius:4px;width:50%;"></div>
+        </div>
+      </div>
+      <div class="product-card" style="opacity:0.4;pointer-events:none;">
+        <div class="product-img-wrap" style="background:var(--cream2);"></div>
+        <div class="product-body">
+          <div style="height:20px;background:var(--border);border-radius:4px;margin-bottom:10px;"></div>
+          <div style="height:14px;background:var(--border);border-radius:4px;margin-bottom:6px;width:70%;"></div>
+          <div style="height:14px;background:var(--border);border-radius:4px;width:50%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     HOW IT WORKS
+================================================================ -->
+<section class="how-it-works" id="how-it-works">
+  <div class="container">
+    <h2>How it works</h2>
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Browse the menu</h3>
+        <p>Check what's available this week and how many slots are left for each item.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Place your order</h3>
+        <p>Select your items and quantity, enter your info, and check out securely with your credit card.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Get a confirmation</h3>
+        <p>You'll receive a confirmation email with pick-up details. Inventory is reserved as soon as you order.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Pick up fresh</h3>
+        <p>Come by during the pick-up window and grab your freshly baked goodies!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     INSTAGRAM SECTION
+================================================================ -->
+<section class="instagram-section" id="instagram">
+  <div class="container">
+    <div class="ig-header">
+      <div class="ig-title-group">
+        <h2>From the kitchen</h2>
+        <!-- CHANGE the handle below to the real Instagram username -->
+        <p>Follow along for behind-the-scenes baking moments</p>
+      </div>
+      <!-- CHANGE @yourusername to the real Instagram handle -->
+      <a href="https://instagram.com/olaladzine" target="_blank" rel="noopener" class="ig-handle-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+        @olaladzine
+      </a>
+    </div>
+
+    <!--
+      HOW TO EMBED INSTAGRAM POSTS:
+      1. Go to the post on instagram.com in a browser
+      2. Click the three dots (⋯) → Embed
+      3. Copy the embed code (the <blockquote> tag)
+      4. Paste it inside one of the .ig-embed-wrap divs below
+      5. The Instagram script at the bottom of this page will render it
+
+      For a fully automated feed widget, see SETUP.md → "Instagram feed" section.
+    -->
+    <div class="ig-grid">
+      <!-- POST 1: Replace .ig-placeholder with your embed -->
+      <div class="ig-placeholder">
+        <span class="ig-placeholder-icon">📸</span>
+        <span>Instagram post</span>
+      </div>
+      <!-- POST 2 -->
+      <div class="ig-placeholder">
+        <span class="ig-placeholder-icon">📸</span>
+        <span>Instagram post</span>
+      </div>
+      <!-- POST 3 -->
+      <div class="ig-placeholder">
+        <span class="ig-placeholder-icon">📸</span>
+        <span>Instagram post</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     FAQ SECTION
+================================================================ -->
+<section class="faq-section" id="faq">
+  <div class="container">
+    <div class="faq-header">
+      <h2>The story behind the bakes</h2>
+      <p>Everything you wanted to know about what goes into each bite.</p>
+    </div>
+
+    <div class="faq-grid" id="faqGrid">
+      <!-- FAQ items are generated by JS below — edit the faqData array to change content -->
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================
+     FOOTER
+================================================================ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:12px;">
+        <span style="font-size:26px;">🥐</span>
+        <span class="nav-logo-text">Baking Atelier</span>
+      </div>
+      <p>Small-batch, made-to-order baking. Every item is crafted with care and baked fresh for you.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Quick links</h4>
+      <ul>
+        <li><a href="#menu">This week's menu</a></li>
+        <li><a href="#instagram">Instagram</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h4>Contact</h4>
+      <ul>
+        <!-- CHANGE to real email and Instagram -->
+        <li><a href="mailto:ola_baksz@hotmail.com">ola_baksz@hotmail.com</a></li>
+        <li><a href="https://instagram.com/olaladzine" target="_blank">Instagram</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Baking Atelier. All rights reserved.</span>
+    <span>Made with 💛 and lots of butter.</span>
+  </div>
+</footer>
+
+<!-- ================================================================
+     ORDER MODAL
+================================================================ -->
+<div class="modal-overlay" id="orderModal" onclick="closeModal(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalProductName">
+    <div class="modal-header">
+      <img class="modal-img" id="modalImg" src="" alt="">
+      <div class="modal-title-group">
+        <div class="modal-product-name" id="modalProductName">Product Name</div>
+        <div class="modal-price" id="modalPrice">$0.00</div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label" for="customerName">Your name</label>
+        <input class="form-input" type="text" id="customerName" placeholder="Jane Smith" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customerEmail">Email address</label>
+        <input class="form-input" type="email" id="customerEmail" placeholder="jane@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <span class="qty-display" id="qtyDisplay">1</span>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="orderNotes">Notes (optional)</label>
+        <input class="form-input" type="text" id="orderNotes" placeholder="Allergies, special requests…">
+      </div>
+
+      <div class="modal-total">
+        <span>Total</span>
+        <span id="modalTotal">$0.00</span>
+      </div>
+
+      <div class="checkout-error" id="checkoutError"></div>
+      <div class="checkout-loading" id="checkoutLoading">⏳ Preparing your checkout…</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-primary btn-checkout" id="checkoutBtn" onclick="proceedToCheckout()">
+        Continue to payment →
+      </button>
+      <p class="modal-note">🔒 Secure checkout via Stripe · No account required</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+================================================================ -->
+<script>
+/* ----------------------------------------------------------------
+   CONFIG — edit these values
+   ----------------------------------------------------------------
+   SUPABASE_URL and SUPABASE_ANON_KEY: get these from your Supabase
+   project dashboard → Settings → API
+   (The anon key is safe to expose in the frontend)
+
+   CHECKOUT_FUNCTION_URL: your Netlify function endpoint.
+   Leave as-is if deploying to Netlify.
+   ---------------------------------------------------------------- */
+const CONFIG = {
+  SUPABASE_URL:      'https://uzptqbvvgwtcluahrfuw.supabase.co',        // e.g. https://xxxx.supabase.co
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV6cHRxYnZ2Z3d0Y2x1YWhyZnV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTE0OTQsImV4cCI6MjA5NjMyNzQ5NH0.49Wm-BNuGzcsJkont03jGt6OfYZlk9fg20oPDiN91Z8',   // starts with eyJ…
+  CHECKOUT_FUNCTION_URL: '/.netlify/functions/create-checkout',
+  PICKUP_LOCATION: '86 St. George St. W, Alexandria K0C1A0 — Saturday & Sunday 10am–2pm',
+};
+
+/* ----------------------------------------------------------------
+   FAQ DATA — edit freely
+   ---------------------------------------------------------------- */
+const faqData = [
+  {
+    q: 'What makes your scones different?',
+    a: 'The secret is cold butter — real, full-fat butter that gets worked into the dough until it\'s the size of peas. Those pockets melt in the oven and create that signature flaky, airy crumb. I also rest the dough in the fridge overnight so the flavours develop fully.',
+  },
+  {
+    q: 'Do you use any artificial ingredients?',
+    a: 'Never. Every recipe calls for real butter, fresh eggs, unbleached flour, and natural flavourings. No preservatives, no artificial colours. What you taste is exactly what went in.',
+  },
+  {
+    q: 'Can you accommodate allergies?',
+    a: 'Please mention any allergies in the Notes field when ordering. I bake in a home kitchen that handles wheat, dairy, and eggs — so I cannot guarantee a fully allergen-free environment, but I\'m happy to discuss what\'s possible.',
+  },
+  {
+    q: 'How fresh are the baked goods?',
+    a: 'Everything is baked the morning of pick-up day. Scones and cupcakes are best eaten the same day. Cakes keep well in the fridge for 2–3 days.',
+  },
+  {
+    q: 'Why are quantities limited?',
+    a: 'I\'m a one-person operation baking at home. Limiting quantities lets me give each item the time and attention it deserves. It\'s quality over quantity, always.',
+  },
+  {
+    q: 'Do you take custom cake orders?',
+    a: 'Yes! Custom cakes (birthdays, celebrations, etc.) are welcome with at least 1 week\'s notice. Send me a message on Instagram or by email to discuss your vision.',
+  },
+  {
+    q: 'What payment methods do you accept?',
+    a: 'Online orders are processed securely through Stripe — credit and debit cards accepted. Payment is taken at the time of ordering.',
+  },
+  {
+    q: 'What if I need to cancel my order?',
+    a: 'Life happens! Reach out at least 48 hours before pick-up and I\'ll issue a full refund. Cancellations less than 48 hours before pick-up unfortunately can\'t be refunded as baking has already begun.',
+  },
+];
+
+/* ----------------------------------------------------------------
+   APP STATE
+   ---------------------------------------------------------------- */
+let supabaseClient = null;
+let products = [];
+let selectedProduct = null;
+let qty = 1;
+
+/* ----------------------------------------------------------------
+   INIT
+   ---------------------------------------------------------------- */
+document.addEventListener('DOMContentLoaded', () => {
+  // Show pickup location
+  document.getElementById('pickup-location').textContent = CONFIG.PICKUP_LOCATION;
+
+  // Show success banner if redirected from Stripe
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success') === '1') {
+    document.getElementById('successBanner').classList.add('show');
+    window.history.replaceState({}, '', window.location.pathname);
+    document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Render FAQ
+  renderFAQ();
+
+  // Init Supabase and load products
+  if (CONFIG.SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+    supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    loadProducts();
+  } else {
+    // Demo mode — show sample products so the page looks complete without a real backend
+    loadDemoProducts();
+  }
+});
+
+/* ----------------------------------------------------------------
+   SUPABASE PRODUCT LOADING
+   Expected table: products
+   Columns: id (uuid), name, description, price_cents, total_slots,
+            remaining_slots, image_url, tag, active (bool)
+   ---------------------------------------------------------------- */
+async function loadProducts() {
+  const { data, error } = await supabaseClient
+    .from('products')
+    .select('*')
+    .eq('active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Supabase error:', error);
+    loadDemoProducts(); // graceful fallback
+    return;
+  }
+  products = data;
+  renderProducts(products);
+}
+
+/* ----------------------------------------------------------------
+   DEMO PRODUCTS (used when Supabase is not yet configured)
+   ---------------------------------------------------------------- */
+function loadDemoProducts() {
+  products = [
+    {
+      id: 'demo-1',
+      name: 'Classic Cream Scones',
+      description: 'Our signature scones — flaky, buttery, and perfectly golden. Served with jam & clotted cream recipe card.',
+      price_cents: 1400,
+      total_slots: 12,
+      remaining_slots: 7,
+      image_url: 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=600&h=420&fit=crop',
+      tag: 'Fan favourite',
+    },
+    {
+      id: 'demo-2',
+      name: 'Lemon Blueberry Scones',
+      description: 'Bright lemon zest folded through a tender crumb, studded with fresh wild blueberries. A seasonal treat.',
+      price_cents: 1600,
+      total_slots: 8,
+      remaining_slots: 3,
+      image_url: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=600&h=420&fit=crop',
+      tag: 'Seasonal',
+    },
+    {
+      id: 'demo-3',
+      name: 'Vanilla Bean Cupcakes',
+      description: 'Light vanilla sponge topped with Swiss meringue buttercream and a sprinkle of vanilla bean caviar.',
+      price_cents: 500,
+      total_slots: 24,
+      remaining_slots: 24,
+      image_url: 'https://images.unsplash.com/photo-1614707267537-b85aaf00c4b7?w=600&h=420&fit=crop',
+      tag: null,
+    },
+    {
+      id: 'demo-4',
+      name: 'Chocolate Ganache Cake',
+      description: 'A rich, dense chocolate cake draped in glossy dark chocolate ganache. Serves 8–10. Pre-order required.',
+      price_cents: 7500,
+      total_slots: 3,
+      remaining_slots: 1,
+      image_url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=420&fit=crop',
+      tag: 'Whole cake',
+    },
+    {
+      id: 'demo-5',
+      name: 'Mixed Scone Box (6)',
+      description: 'Can\'t choose? Get a curated box of 6 assorted scones — a mix of classic and seasonal flavours.',
+      price_cents: 2800,
+      total_slots: 6,
+      remaining_slots: 0,
+      image_url: 'https://images.unsplash.com/photo-1549931319-a545dcf3bc7e?w=600&h=420&fit=crop',
+      tag: 'Box set',
+    },
+    {
+      id: 'demo-6',
+      name: 'Earl Grey & Lavender Scones',
+      description: 'Delicate floral notes from culinary lavender with the soft, tannin warmth of Earl Grey. Utterly calming.',
+      price_cents: 1800,
+      total_slots: 10,
+      remaining_slots: 10,
+      image_url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=600&h=420&fit=crop',
+      tag: 'New',
+    },
+  ];
+  renderProducts(products);
+}
+
+/* ----------------------------------------------------------------
+   RENDER PRODUCTS
+   ---------------------------------------------------------------- */
+function renderProducts(items) {
+  const grid = document.getElementById('productGrid');
+  grid.innerHTML = '';
+
+  if (!items || items.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px 0;">No items available this week. Check back soon!</p>';
+    return;
+  }
+
+  items.forEach(p => {
+    const soldOut = p.remaining_slots <= 0;
+    const low     = !soldOut && p.remaining_slots <= 3;
+    const slotClass  = soldOut ? 'sold-out' : low ? 'low' : 'available';
+    const slotText   = soldOut ? 'Sold out' : low ? `Only ${p.remaining_slots} left!` : `${p.remaining_slots} available`;
+    const priceStr   = formatPrice(p.price_cents);
+
+    grid.innerHTML += `
+      <div class="product-card" data-id="${p.id}">
+        <div class="product-img-wrap">
+          <img src="${p.image_url || ''}" alt="${p.name}" loading="lazy"
+               onerror="this.style.display='none'">
+          ${p.tag ? `<span class="product-tag">${p.tag}</span>` : ''}
+        </div>
+        <div class="product-body">
+          <div class="product-header">
+            <div class="product-name">${p.name}</div>
+            <div class="product-price">${priceStr}</div>
+          </div>
+          <p class="product-desc">${p.description}</p>
+          <div class="product-footer">
+            <div class="slots-badge ${slotClass}">
+              <span class="slots-dot"></span>
+              ${slotText}
+            </div>
+            <button
+              class="btn btn-primary order-btn"
+              onclick="openOrderModal('${p.id}')"
+              ${soldOut ? 'disabled' : ''}>
+              ${soldOut ? 'Sold out' : 'Order'}
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+/* ----------------------------------------------------------------
+   ORDER MODAL
+   ---------------------------------------------------------------- */
+function openOrderModal(productId) {
+  selectedProduct = products.find(p => p.id === productId);
+  if (!selectedProduct) return;
+
+  qty = 1;
+  document.getElementById('modalImg').src         = selectedProduct.image_url || '';
+  document.getElementById('modalImg').alt         = selectedProduct.name;
+  document.getElementById('modalProductName').textContent = selectedProduct.name;
+  document.getElementById('modalPrice').textContent       = formatPrice(selectedProduct.price_cents) + ' each';
+  document.getElementById('qtyDisplay').textContent       = '1';
+  document.getElementById('modalTotal').textContent       = formatPrice(selectedProduct.price_cents);
+  document.getElementById('checkoutError').style.display = 'none';
+  document.getElementById('checkoutLoading').style.display = 'none';
+  document.getElementById('checkoutBtn').disabled = false;
+
+  document.getElementById('orderModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('customerName').focus();
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('orderModal')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('orderModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function changeQty(delta) {
+  const maxQty = selectedProduct ? Math.min(selectedProduct.remaining_slots, 10) : 10;
+  qty = Math.max(1, Math.min(qty + delta, maxQty));
+  document.getElementById('qtyDisplay').textContent = qty;
+  document.getElementById('modalTotal').textContent = formatPrice(selectedProduct.price_cents * qty);
+}
+
+/* ----------------------------------------------------------------
+   STRIPE CHECKOUT
+   ---------------------------------------------------------------- */
+async function proceedToCheckout() {
+  const name  = document.getElementById('customerName').value.trim();
+  const email = document.getElementById('customerEmail').value.trim();
+
+  if (!name || !email) {
+    showError('Please enter your name and email address.');
+    return;
+  }
+  if (!/\S+@\S+\.\S+/.test(email)) {
+    showError('Please enter a valid email address.');
+    return;
+  }
+
+  const btn = document.getElementById('checkoutBtn');
+  btn.disabled = true;
+  document.getElementById('checkoutLoading').style.display = 'block';
+  document.getElementById('checkoutError').style.display   = 'none';
+
+  try {
+    const res = await fetch(CONFIG.CHECKOUT_FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productId: selectedProduct.id,
+        quantity:  qty,
+        customerName:  name,
+        customerEmail: email,
+        notes: document.getElementById('orderNotes').value.trim(),
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.checkoutUrl) {
+      throw new Error(data.error || 'Something went wrong. Please try again.');
+    }
+
+    // Redirect to Stripe Checkout
+    window.location.href = data.checkoutUrl;
+
+  } catch (err) {
+    showError(err.message);
+    btn.disabled = false;
+    document.getElementById('checkoutLoading').style.display = 'none';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('checkoutError');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+}
+
+/* ----------------------------------------------------------------
+   FAQ
+   ---------------------------------------------------------------- */
+function renderFAQ() {
+  const grid = document.getElementById('faqGrid');
+  grid.innerHTML = faqData.map((item, i) => `
+    <div class="faq-item">
+      <button class="faq-question" onclick="toggleFAQ(${i})" id="faq-q-${i}">
+        ${item.q}
+        <span class="faq-chevron">▾</span>
+      </button>
+      <div class="faq-answer" id="faq-a-${i}">${item.a}</div>
+    </div>`).join('');
+}
+
+function toggleFAQ(i) {
+  const btn = document.getElementById(`faq-q-${i}`);
+  const ans = document.getElementById(`faq-a-${i}`);
+  const isOpen = btn.classList.contains('open');
+
+  // Close all
+  document.querySelectorAll('.faq-question.open').forEach(b => b.classList.remove('open'));
+  document.querySelectorAll('.faq-answer.open').forEach(a => a.classList.remove('open'));
+
+  if (!isOpen) {
+    btn.classList.add('open');
+    ans.classList.add('open');
+  }
+}
+
+/* ----------------------------------------------------------------
+   UTILS
+   ---------------------------------------------------------------- */
+function formatPrice(cents) {
+  return '$' + (cents / 100).toFixed(2);
+}
+
+function toggleMobileMenu() {
+  const nav = document.querySelector('.nav-links');
+  nav.style.display = nav.style.display === 'flex' ? 'none' : 'flex';
+  nav.style.flexDirection = 'column';
+  nav.style.position = 'absolute';
+  nav.style.top = '68px';
+  nav.style.left = '0';
+  nav.style.right = '0';
+  nav.style.background = 'var(--warm-white)';
+  nav.style.padding = '20px 24px';
+  nav.style.borderBottom = '1px solid var(--border)';
+  nav.style.boxShadow = 'var(--shadow)';
+  nav.style.zIndex = '99';
+}
+
+// Keyboard: Escape closes modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModalDirect();
+});
+</script>
+
+<!-- Instagram embed script (only needed when you add real embeds) -->
+<!-- <script async src="//www.instagram.com/embed.js"></script> -->
+
+</body>
+</html>
