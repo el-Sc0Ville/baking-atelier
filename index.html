@@ -159,6 +159,8 @@
       transition: color 0.2s;
     }
     .nav-links a:hover { color: var(--brown); text-decoration: none; }
+    .nav-links .btn-primary { color: #fff; }
+    .nav-links .btn-primary:hover { color: #fff; }
 
     .nav-mobile-toggle {
       display: none;
@@ -807,6 +809,42 @@
       font-size: 12px;
       color: var(--text-muted);
     }
+    .interac-tip {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dashed var(--text-muted);
+      display: inline-block;
+    }
+    .interac-tip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--brown-dark);
+      color: #fff;
+      font-size: 12px;
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 6px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .interac-tip::before {
+      content: '';
+      position: absolute;
+      bottom: calc(100% + 2px);
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--brown-dark);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .interac-tip:hover::after,
+    .interac-tip:hover::before { opacity: 1; }
 
     .checkout-loading {
       display: none;
@@ -1149,7 +1187,7 @@
       <button class="btn btn-primary btn-checkout" id="checkoutBtn" onclick="proceedToCheckout()">
         Place order →
       </button>
-      <p class="modal-note">💳 Payment by Interac e-transfer or cash at pick-up · No account required</p>
+      <p class="modal-note">💳 Payment by <span class="interac-tip" id="interacTip">Interac e-transfer</span> or cash at pick-up · No account required</p>
     </div>
   </div>
 </div>
@@ -1174,6 +1212,7 @@ const CONFIG = {
   ORDER_FUNCTION_URL: '/.netlify/functions/submit-order',
   PICKUP_ADDRESS: '86 St. George St. W, Alexandria K0C1A0',
   PICKUP_HOURS:   'Saturday & Sunday · 10am – 2pm',
+  BAKER_EMAIL:    'ola_baksz@hotmail.com',   // CHANGE to real Interac e-transfer email
 };
 
 /* ----------------------------------------------------------------
@@ -1226,6 +1265,9 @@ let qty = 1;
    INIT
    ---------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
+  // Wire up Interac tooltip
+  document.getElementById('interacTip').setAttribute('data-tip', 'Send to: ' + CONFIG.BAKER_EMAIL);
+
   // Show pickup info
   document.getElementById('pickup-hours').textContent   = CONFIG.PICKUP_HOURS;
   const addrEl = document.getElementById('pickup-address');
