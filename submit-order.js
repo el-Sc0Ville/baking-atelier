@@ -1,5 +1,5 @@
 /**
- * Vercel Serverless Function: submit-order
+ * Netlify Function: submit-order
  *
  * Called when a customer submits an order (no payment required).
  * - Checks inventory
@@ -7,12 +7,12 @@
  * - Decrements remaining_slots
  * - Sends email notifications to the baker and the customer
  *
- * Required environment variables (Vercel dashboard → Project → Settings → Environment Variables):
+ * Required environment variables (Netlify dashboard → Site configuration → Environment variables):
  *   SUPABASE_URL          — your Supabase project URL
  *   SUPABASE_SERVICE_KEY  — your Supabase service role key
  *   RESEND_API_KEY        — from resend.com (free account, 100 emails/day)
  *   BAKER_EMAIL           — the email address that receives new order notifications
- *   BAKING_SITE_NAME      — e.g. "Baking Atelier" (used in email subjects)
+ *   SITE_NAME             — e.g. "Baking Atelier" (used in email subjects)
  */
 
 const { createClient } = require('@supabase/supabase-js');
@@ -26,24 +26,19 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const BAKER_EMAIL    = process.env.BAKER_EMAIL  || 'hello@bakingatelier.com';
 const SITE_NAME      = process.env.BAKING_SITE_NAME || 'Baking Atelier';
 
-module.exports = async (req, res) => {
-  // CORS headers (same-origin in production, useful during local testing)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  let body;
+  try { body = JSON.parse(event.body); }
+  catch { return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) }; }
 
-  const { productId, quantity, customerName, customerEmail, notes } = req.body || {};
+  const { productId, quantity, customerName, customerEmail, notes } = body;
 
   if (!productId || !quantity || !customerName || !customerEmail) {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) };
   }
 
   // 1. Fetch product
@@ -54,14 +49,17 @@ module.exports = async (req, res) => {
     .single();
 
   if (fetchError || !product) {
-    return res.status(404).json({ error: 'Product not found' });
+    return { statusCode: 404, body: JSON.stringify({ error: 'Product not found' }) };
   }
 
   // 2. Check inventory
   if (product.remaining_slots < quantity) {
-    return res.status(409).json({
-      error: `Sorry, only ${product.remaining_slots} slot(s) left for this item.`,
-    });
+    return {
+      statusCode: 409,
+      body: JSON.stringify({
+        error: `Sorry, only ${product.remaining_slots} slot(s) left for this item.`,
+      }),
+    };
   }
 
   const totalCents = product.price_cents * quantity;
@@ -83,7 +81,7 @@ module.exports = async (req, res) => {
 
   if (orderError) {
     console.error('Order insert error:', orderError);
-    return res.status(500).json({ error: 'Could not save order. Please try again.' });
+    return { statusCode: 500, body: JSON.stringify({ error: 'Could not save order. Please try again.' }) };
   }
 
   // 4. Decrement slots
@@ -143,12 +141,16 @@ module.exports = async (req, res) => {
     });
   }
 
-  return res.status(200).json({ success: true, orderRef: order.id.slice(0, 8).toUpperCase() });
+  return {
+    statusCode: 200,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ success: true, orderRef: order.id.slice(0, 8).toUpperCase() }),
+  };
 };
 
 async function sendEmail({ to, subject, html }) {
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method:  'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
@@ -161,7 +163,7 @@ async function sendEmail({ to, subject, html }) {
         html,
       }),
     });
-    if (!response.ok) console.error('Resend error:', await response.text());
+    if (!res.ok) console.error('Resend error:', await res.text());
   } catch (err) {
     console.error('Email send failed:', err.message);
   }
